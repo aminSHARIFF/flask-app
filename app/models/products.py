@@ -1,4 +1,4 @@
-from app import db, bcrypt
+from app import db
 from app.models.base import BaseModel
 
 class Product(BaseModel):

@@ -2,7 +2,7 @@ from app import db
 from app.models.base import BaseModel
 
 class InventoryTransaction(BaseModel):
-    __tablename__ = "Inventory_transactions"
+    __tablename__ = "inventory_transactions"
     
     product_id = db.Column(db.Integer, db.ForeignKey("products.id"), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
