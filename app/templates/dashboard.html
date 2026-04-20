@@ -173,69 +173,134 @@
   </div>
 
   <script>
-    // get the saved token and user from localStorage
-    const token = localStorage.getItem('token')
-    const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const token = localStorage.getItem('token')
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
 
-    // if no token redirect to login
-    if (!token) {
-      window.location.href = '/login'
-    }
+  if (!token) {
+    window.location.href = '/login'
+  }
 
-    // show the welcome message with username
-    document.getElementById('welcome-msg').textContent = `Welcome back, ${user.username}!`
-    document.getElementById('user-role').textContent = user.role
+  document.getElementById('welcome-msg').textContent = `Welcome back, ${user.username}!`
+  document.getElementById('user-role').textContent = user.role
 
-    // try to load products from the api
-    async function loadProducts() {
-      try {
-        const response = await fetch('/products', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
+  async function loadProducts() {
+    try {
+      const res = await fetch('/products', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
 
-        if (response.ok) {
-          const data = await response.json()
-          const products = data.data || []
+      const data = await res.json()
+      const products = data.data || []
 
-          document.getElementById('total-products').textContent = products.length
+      document.getElementById('total-products').textContent = products.length
 
-          const tbody = document.getElementById('products-table')
+      const tbody = document.getElementById('products-table')
 
-          if (products.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="no-data">No products yet</td></tr>'
-            return
-          }
-
-          // build the table rows
-          tbody.innerHTML = products.map(p => `
-            <tr>
-              <td>${p.name}</td>
-              <td>$${p.price}</td>
-              <td>${p.stock}</td>
-              <td>${p.category || 'N/A'}</td>
-            </tr>
-          `).join('')
-
-        } else {
-          document.getElementById('products-table').innerHTML =
-            '<tr><td colspan="4" class="no-data">Could not load products</td></tr>'
-        }
-      } catch (err) {
-        document.getElementById('products-table').innerHTML =
-          '<tr><td colspan="4" class="no-data">Backend not ready yet</td></tr>'
+      if (!products.length) {
+        tbody.innerHTML = `<tr><td colspan="4" class="no-data">No products yet</td></tr>`
+        return
       }
+
+      tbody.innerHTML = products.map(p => `
+        <tr>
+          <td>${p.name}</td>
+          <td>$${p.price}</td>
+          <td>${p.stock}</td>
+          <td>
+            ${p.stock}
+
+            <!-- INVENTORY CONTROLS -->
+            <div style="margin-top:5px;">
+              <button onclick="stockIn(${p.id})">+ In</button>
+              <button onclick="stockOut(${p.id})">- Out</button>
+
+              ${user.role === 'admin' ? `
+                <button onclick="deleteProduct(${p.id})" style="color:red;">Delete</button>
+              ` : ''}
+            </div>
+          </td>
+        </tr>
+      `).join('')
+
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  async function stockIn(productId) {
+    const qty = prompt("Enter quantity to add:")
+    if (!qty) return
+
+    const res = await fetch(`/inventory/in/${productId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ quantity: Number(qty) })
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      alert(data.message)
+      return
     }
 
-    // logout clears the token and goes back to login
-    function logout() {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      window.location.href = '/login'
-    }
-
-    // load products when page opens
     loadProducts()
-  </script>
+  }
+
+  async function stockOut(productId) {
+    const qty = prompt("Enter quantity to remove:")
+    if (!qty) return
+
+    await fetch(`/inventory/out/${productId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ quantity: Number(qty) })
+    })
+
+    const data = await res.json()
+
+  if (!res.ok) {
+    alert(data.message)
+    return
+  }
+
+    loadProducts()
+  }
+
+  async function deleteProduct(productId) {
+    if (!confirm("Are you sure?")) return
+
+    await fetch(`/products/${productId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    const data = await res.json()
+
+  if (!res.ok) {
+    alert(data.message)
+    return
+  }
+
+    loadProducts()
+  }
+
+  function logout() {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    window.location.href = '/login'
+  }
+
+  loadProducts()
+</script>
 
 </body>
 </html>
