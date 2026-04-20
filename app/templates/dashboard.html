@@ -141,8 +141,8 @@
         <p id="total-products">--</p>
       </div>
       <div class="stat-card">
-        <h3>Categories</h3>
-        <p id="total-categories">--</p>
+        <h3>Total Stock</h3>
+        <p id="total-stock">--</p>
       </div>
       <div class="stat-card">
         <h3>Logged in as</h3>
@@ -159,7 +159,7 @@
             <th>Name</th>
             <th>Price</th>
             <th>Stock</th>
-            <th>Category</th>
+            <th>Inventory Management</th>
           </tr>
         </thead>
         <tbody id="products-table">
@@ -192,6 +192,9 @@
       const data = await res.json()
       const products = data.data || []
 
+      const totalStock = products.reduce((sum, p) => sum + p.stock, 0)
+      document.getElementById('total-stock').textContent = totalStock
+
       document.getElementById('total-products').textContent = products.length
 
       const tbody = document.getElementById('products-table')
@@ -207,8 +210,6 @@
           <td>$${p.price}</td>
           <td>${p.stock}</td>
           <td>
-            ${p.stock}
-
             <!-- INVENTORY CONTROLS -->
             <div style="margin-top:5px;">
               <button onclick="stockIn(${p.id})">+ In</button>
@@ -254,7 +255,7 @@
     const qty = prompt("Enter quantity to remove:")
     if (!qty) return
 
-    await fetch(`/inventory/out/${productId}`, {
+    const res = await fetch(`/inventory/out/${productId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -265,10 +266,10 @@
 
     const data = await res.json()
 
-  if (!res.ok) {
-    alert(data.message)
-    return
-  }
+    if (!res.ok) {
+      alert(data.message)
+      return
+    }
 
     loadProducts()
   }
@@ -276,7 +277,7 @@
   async function deleteProduct(productId) {
     if (!confirm("Are you sure?")) return
 
-    await fetch(`/products/${productId}`, {
+    const res = await fetch(`/products/${productId}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`
@@ -285,10 +286,10 @@
 
     const data = await res.json()
 
-  if (!res.ok) {
-    alert(data.message)
-    return
-  }
+    if (!res.ok) {
+      alert(data.message)
+      return
+    }
 
     loadProducts()
   }
