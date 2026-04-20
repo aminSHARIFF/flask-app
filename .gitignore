@@ -205,3 +205,15 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# SQLite databases
+*.db
+
+# Flask migrations (only if you want to ignore them)
+migrations/
+
+# VS Code (optional)
+.vscode/
+
+# OS files
+Thumbs.db
