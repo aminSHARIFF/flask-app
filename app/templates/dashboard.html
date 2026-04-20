@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+    }
+
+    /* top navigation bar */
+    .navbar {
+      background: #4f46e5;
+      padding: 16px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .navbar h1 {
+      color: white;
+      font-size: 20px;
+    }
+
+    .navbar button {
+      background: white;
+      color: #4f46e5;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    /* main content area */
+    .container {
+      padding: 30px;
+    }
+
+    .welcome {
+      font-size: 22px;
+      color: #333;
+      margin-bottom: 24px;
+    }
+
+    /* stat cards at the top */
+    .stats {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 24px;
+      border-radius: 10px;
+      flex: 1;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+
+    .stat-card h3 {
+      color: #888;
+      font-size: 13px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .stat-card p {
+      font-size: 28px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    /* products table */
+    .table-section {
+      background: white;
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+
+    .table-section h2 {
+      margin-bottom: 16px;
+      color: #333;
+      font-size: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      text-align: left;
+      padding: 10px;
+      border-bottom: 2px solid #f0f2f5;
+      color: #888;
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+
+    td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #f0f2f5;
+      color: #444;
+      font-size: 14px;
+    }
+
+    .no-data {
+      text-align: center;
+      color: #aaa;
+      padding: 30px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- navigation bar -->
+  <div class="navbar">
+    <h1>Inventory System</h1>
+    <button onclick="logout()">Log out</button>
+  </div>
+
+  <div class="container">
+
+    <!-- welcome message -->
+    <p class="welcome" id="welcome-msg">Welcome back!</p>
+
+    <!-- stat cards -->
+    <div class="stats">
+      <div class="stat-card">
+        <h3>Total Products</h3>
+        <p id="total-products">--</p>
+      </div>
+      <div class="stat-card">
+        <h3>Categories</h3>
+        <p id="total-categories">--</p>
+      </div>
+      <div class="stat-card">
+        <h3>Logged in as</h3>
+        <p id="user-role">--</p>
+      </div>
+    </div>
+
+    <!-- products table -->
+    <div class="table-section">
+      <h2>Products</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Category</th>
+          </tr>
+        </thead>
+        <tbody id="products-table">
+          <tr>
+            <td colspan="4" class="no-data">Loading products...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <script>
+    // get the saved token and user from localStorage
+    const token = localStorage.getItem('token')
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+
+    // if no token redirect to login
+    if (!token) {
+      window.location.href = '/login'
+    }
+
+    // show the welcome message with username
+    document.getElementById('welcome-msg').textContent = `Welcome back, ${user.username}!`
+    document.getElementById('user-role').textContent = user.role
+
+    // try to load products from the api
+    async function loadProducts() {
+      try {
+        const response = await fetch('/products', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          const products = data.data || []
+
+          document.getElementById('total-products').textContent = products.length
+
+          const tbody = document.getElementById('products-table')
+
+          if (products.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="no-data">No products yet</td></tr>'
+            return
+          }
+
+          // build the table rows
+          tbody.innerHTML = products.map(p => `
+            <tr>
+              <td>${p.name}</td>
+              <td>$${p.price}</td>
+              <td>${p.stock}</td>
+              <td>${p.category || 'N/A'}</td>
+            </tr>
+          `).join('')
+
+        } else {
+          document.getElementById('products-table').innerHTML =
+            '<tr><td colspan="4" class="no-data">Could not load products</td></tr>'
+        }
+      } catch (err) {
+        document.getElementById('products-table').innerHTML =
+          '<tr><td colspan="4" class="no-data">Backend not ready yet</td></tr>'
+      }
+    }
+
+    // logout clears the token and goes back to login
+    function logout() {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      window.location.href = '/login'
+    }
+
+    // load products when page opens
+    loadProducts()
+  </script>
+
+</body>
+</html>

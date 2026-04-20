@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .card {
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      width: 380px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      margin-bottom: 24px;
+      color: #333;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #555;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 16px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 11px;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #4338ca;
+    }
+
+    .error {
+      color: red;
+      font-size: 13px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    .success {
+      color: green;
+      font-size: 13px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    .bottom {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .bottom a {
+      color: #4f46e5;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Create an account</h2>
+
+    <p class="error" id="error-msg"></p>
+    <p class="success" id="success-msg"></p>
+
+    <label>Username</label>
+    <input type="text" id="username" placeholder="your username" />
+
+    <label>Email</label>
+    <input type="email" id="email" placeholder="you@example.com" />
+
+    <label>Password</label>
+    <input type="password" id="password" placeholder="••••••••" />
+
+    <button onclick="register()">Create account</button>
+
+    <div class="bottom">
+      Already have an account? <a href="/login">Log in</a>
+    </div>
+  </div>
+
+  <script>
+    async function register() {
+      const username = document.getElementById('username').value
+      const email = document.getElementById('email').value
+      const password = document.getElementById('password').value
+      const errorMsg = document.getElementById('error-msg')
+      const successMsg = document.getElementById('success-msg')
+
+      // hide both messages first
+      errorMsg.style.display = 'none'
+      successMsg.style.display = 'none'
+
+      // send register request to our flask api
+      const response = await fetch('/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // show success and redirect to login
+        successMsg.textContent = 'Account created! Redirecting to login...'
+        successMsg.style.display = 'block'
+        setTimeout(() => {
+          window.location.href = '/login'
+        }, 1500)
+      } else {
+        errorMsg.textContent = data.message
+        errorMsg.style.display = 'block'
+      }
+    }
+  </script>
+
+</body>
+</html>
