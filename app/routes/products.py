@@ -56,7 +56,41 @@ def create_product():
 
 @products_bp.route('/', methods=['GET'])
 def get_products():
-    products = Product.query.all()
+    """
+    ---
+    get:
+      summary: Get all products
+      description: Returns paginated list of products with optional filters
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: Page number
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+          description: Items per page
+      responses:
+        200:
+          description: List of products
+    """
+    page = request.args.get('page', 1, type=int)
+    limit = request.args.get('limit', 5, type=int)
+
+    min_stock = request.args.get('min_stock', type=int)
+    max_stock = request.args.get('max_stock', type=int)
+
+    query = Product.query
+
+    if min_stock is not None:
+        query = query.filter(Product.stock >= min_stock)
+
+    if max_stock is not None:
+        query = query.filter(Product.stock <= max_stock)
+
+    paginated = query.paginate(page=page, per_page=limit, error_out=False)
 
     return jsonify({
         "status": "success",
@@ -66,8 +100,15 @@ def get_products():
                 "name": p.name,
                 "price": p.price,
                 "stock": p.stock
-            } for p in products
-        ]
+            }
+            for p in paginated.items
+        ],
+        "meta": {
+            "page": page,
+            "limit": limit,
+            "total": paginated.total,
+            "pages": paginated.pages
+        }
     }), 200
 
 @products_bp.route('/<int:product_id>', methods=['GET'])
